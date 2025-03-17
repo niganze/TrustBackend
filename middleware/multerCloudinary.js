@@ -14,8 +14,6 @@ const logUploadInfo = (req, file, label) => {
 
 // Single file uploader for Cloudinary with improved debugging
 const uploadSingleCloud = (fieldName = 'image', folder = "general") => {
-  console.log(`Setting up single upload for field: ${fieldName}, folder: ${folder}`);
-  
   const singleStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: (req, file) => {
@@ -41,37 +39,35 @@ const uploadSingleCloud = (fieldName = 'image', folder = "general") => {
 };
 
 // Multiple file uploader for Cloudinary - simplified version
-const uploadMultipleCloud = (fieldConfig = {}) => {
-  console.log('Setting up multiple upload with config:', fieldConfig);
-  
-  // Default field configuration
-  const fields = fieldConfig.fields || ['images'];
-  const maxCount = fieldConfig.maxCount || 5;
-  const folder = fieldConfig.folder || 'general';
-  
+const uploadMultipleCloud = () => {
   const multiStorage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: (req, file) => {
       logUploadInfo(req, file, 'Multiple Upload Attempt');
-      
+
+      // Check fieldname and dynamically choose folder
+      let folder = 'projects/general';
+      if (file.fieldname === 'image') folder = 'projects/main';
+      if (file.fieldname === 'gallery') folder = 'projects/gallery';
+
       return {
-        folder: folder,
+        folder,
         resource_type: "auto",
         public_id: `${Date.now()}-${file.originalname.split(".")[0]}`
       };
     }
   });
-  
-  // Create field configuration array for multer
-  const fieldArray = Array.isArray(fields) 
-    ? fields.map(field => ({ name: field, maxCount }))
-    : [{ name: fields, maxCount }];
-  
+
+  // Tell multer to expect these two fields:
   return multer({ 
     storage: multiStorage,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10 MB
-  }).fields(fieldArray);
+    limits: { fileSize: 10 * 1024 * 1024 } 
+  }).fields([
+    { name: 'image', maxCount: 1 },       // Main image
+    { name: 'gallery', maxCount: 10 }     // Gallery images
+  ]);
 };
+
 
 // For handling any field type - useful for debugging
 const uploadAny = (folder = "general") => {

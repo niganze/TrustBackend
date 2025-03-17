@@ -3,21 +3,30 @@ import cloudinary from '../config/cloudinary.js';
 
 export const createProject = async (req, res) => {
   try {
-    const { title, description, client, category, tags, size, budget, duration, teamSize, testimonial, timeframe, completionDate } = req.body;
+    const { title, description, timeline, budget, owner, category } = req.body;
+    console.log('REQ FILES:', req.files);
+    console.log('REQ BODY:', req.body);
 
-    // Handling the main project image upload (if any)
     let imageUrl = '';
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'projects',
+    if (req.files && req.files.image && req.files.image[0]) {
+      console.log('Uploading main image to Cloudinary...');
+      const result = await cloudinary.uploader.upload(req.files.image[0].path, {
+        folder: 'projects/main',
       });
       imageUrl = result.secure_url;
+    } else {
+      console.log('No main image found');
+      return res.status(400).json({
+        status: 'error',
+        message: 'Main image is required.',
+      });
     }
 
-    // Handling multiple gallery images (if any)
     const galleryImages = [];
-    if (req.files) {
-      for (const file of req.files) {
+    if (req.files && req.files.gallery) {
+      console.log('Uploading gallery images...');
+      const galleryFiles = req.files.gallery;
+      for (const file of galleryFiles) {
         const result = await cloudinary.uploader.upload(file.path, {
           folder: 'projects/gallery',
         });
@@ -28,20 +37,15 @@ export const createProject = async (req, res) => {
     const newProject = new Project({
       title,
       description,
-      client,
-      category,
-      tags,
-      image: imageUrl,
-      images: galleryImages,
-      size,
+      timeline,
       budget,
-      duration,
-      teamSize,
-      testimonial,
-      timeframe,
-      completion: completionDate ? true : false, // Set to true if completion date is provided
+      owner,
+      category,
+      image: imageUrl,
+      gallery: galleryImages,
     });
 
+    console.log('Saving project:', newProject);
     await newProject.save();
 
     res.status(201).json({
@@ -49,10 +53,13 @@ export const createProject = async (req, res) => {
       data: newProject,
     });
   } catch (error) {
-    console.error(error);
+    console.error('Create project error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Server error, unable to create project.',
+      error: error.message, // Optional, for debugging
     });
   }
 };
+
+

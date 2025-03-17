@@ -11,55 +11,29 @@ const projectSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a description'],
   },
-  client: {
+  image: {
     type: String,
-    required: [true, 'Please add a client name'],
+    required: [true, 'Please add a main image'], // main image URL
+  },
+  timeline: {
+    type: String,
+    required: [true, 'Please add a timeline'],
+  },
+  budget: {
+    type: String,
+    required: [true, 'Please add a budget'],
+  },
+  owner: {
+    type: String,
+    required: [true, 'Please add an owner'],
   },
   category: {
     type: String,
     required: [true, 'Please add a category'],
   },
-  tags: [String],
-  images: [String], // Store an array of image URLs
-  link: {
-    type: String,
-    default: '',
-  },
-  featured: {
-    type: String,
-    default: 'No',
-  },
-  completionDate: {
-    type: Date,
-    default: Date.now,
-  },
-  size: {
-    type: String,
-    required: [true, 'Please add a size'],
-  },
-  budget: {
-    type: Number,
-    required: [true, 'Please add a budget'],
-  },
-  duration: {
-    type: String,
-    required: [true, 'Please add a duration'],
-  },
-  teamSize: {
-    type: Number,
-    required: [true, 'Please add a team size'],
-  },
-  testimonial: {
-    type: String,
-    default: '',
-  },
-  timeframe: {
-    type: String,
-    required: [true, 'Please add a timeframe'],
-  },
-  completion: {
-    type: String,
-    default: 'Not Completed',
+  gallery: {
+    type: [String], // array of image URLs
+    default: [],
   },
   createdAt: {
     type: Date,
