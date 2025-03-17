@@ -63,3 +63,129 @@ export const createProject = async (req, res) => {
 };
 
 
+export const getAllProjects = async (req, res) => {
+  try {
+    const projects = await Project.find();
+
+    res.status(200).json({
+      status: 'success',
+      count: projects.length,
+      data: projects,
+    });
+  } catch (error) {
+    console.error('Get projects error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error, unable to fetch projects.',
+      error: error.message,
+    });
+  }
+};
+
+// Get Single Project
+export const getProjectById = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        status: 'error',
+        message: `No project found with id ${req.params.id}`,
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: project,
+    });
+  } catch (error) {
+    console.error('Get project by ID error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error, unable to fetch project.',
+      error: error.message,
+    });
+  }
+};
+
+// Update Project
+export const updateProject = async (req, res) => {
+  try {
+    const { title, description, timeline, budget, owner, category } = req.body;
+
+    const updatedData = { title, description, timeline, budget, owner, category };
+
+    // Main image update
+    if (req.files && req.files.image && req.files.image[0]) {
+      const result = await cloudinary.uploader.upload(req.files.image[0].path, {
+        folder: 'projects/main',
+      });
+      updatedData.image = result.secure_url;
+    }
+
+    // Gallery images update
+    if (req.files && req.files.gallery) {
+      const galleryFiles = req.files.gallery;
+      const galleryImages = [];
+
+      for (const file of galleryFiles) {
+        const result = await cloudinary.uploader.upload(file.path, {
+          folder: 'projects/gallery',
+        });
+        galleryImages.push(result.secure_url);
+      }
+
+      updatedData.gallery = galleryImages;
+    }
+
+    const updatedProject = await Project.findByIdAndUpdate(req.params.id, updatedData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedProject) {
+      return res.status(404).json({
+        status: 'error',
+        message: `No project found with id ${req.params.id}`,
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: updatedProject,
+    });
+  } catch (error) {
+    console.error('Update project error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error, unable to update project.',
+      error: error.message,
+    });
+  }
+};
+
+// Delete Project
+export const deleteProject = async (req, res) => {
+  try {
+    const project = await Project.findByIdAndDelete(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        status: 'error',
+        message: `No project found with id ${req.params.id}`,
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Project deleted successfully!',
+    });
+  } catch (error) {
+    console.error('Delete project error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error, unable to delete project.',
+      error: error.message,
+    });
+  }
+};
